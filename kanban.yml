@@ -1,0 +1,71 @@
+name: Kanban Automation
+
+on:
+  issues:
+    types: [assigned, closed]
+  pull_request:
+    types: [opened, closed]
+
+jobs:
+  update_project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move issue to "In Progress" when assigned
+        if: github.event_name == 'issues' && github.event.action == 'assigned'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const columns = await github.projects.listColumns({
+              project_id: <YOUR_PROJECT_ID>
+            });
+            const inProgressColumn = columns.data.find(column => column.name === 'In Progress');
+            await github.projects.createCard({
+              column_id: inProgressColumn.id,
+              content_id: context.payload.issue.id,
+              content_type: 'Issue'
+            });
+
+      - name: Move issue to "Done" when closed
+        if: github.event_name == 'issues' && github.event.action == 'closed'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const columns = await github.projects.listColumns({
+              project_id: <YOUR_PROJECT_ID>
+            });
+            const doneColumn = columns.data.find(column => column.name === 'Done');
+            await github.projects.createCard({
+              column_id: doneColumn.id,
+              content_id: context.payload.issue.id,
+              content_type: 'Issue'
+            });
+
+      - name: Move PR to "In Progress" when opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const columns = await github.projects.listColumns({
+              project_id: <YOUR_PROJECT_ID>
+            });
+            const inProgressColumn = columns.data.find(column => column.name === 'In Progress');
+            await github.projects.createCard({
+              column_id: inProgressColumn.id,
+              content_id: context.payload.pull_request.id,
+              content_type: 'PullRequest'
+            });
+
+      - name: Move PR to "Done" when closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const columns = await github.projects.listColumns({
+              project_id: <YOUR_PROJECT_ID>
+            });
+            const doneColumn = columns.data.find(column => column.name === 'Done');
+            await github.projects.createCard({
+              column_id: doneColumn.id,
+              content_id: context.payload.pull_request.id,
+              content_type: 'PullRequest'
+            });
