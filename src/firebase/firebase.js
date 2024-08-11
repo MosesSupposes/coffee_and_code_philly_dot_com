@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
-import { collection, getDoc, doc, getDocs } from "firebase/firestore";
+import { collection, getDoc, setDoc, doc, getDocs } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -61,4 +61,28 @@ const fetchCollectionData = async (collectionName) => {
   }
 };
 
-export { storage, fetchPageData, fetchImageURL, fetchCollectionData };
+const writeCollectionData = async (
+  collectionName,
+  documentId,
+  fieldName,
+  fieldValue
+) => {
+  try {
+    const docRef = doc(db, collectionName, documentId);
+    await setDoc(docRef, { [fieldName]: fieldValue }, { merge: true });
+    console.log(
+      `Wrote ${fieldName}: ${fieldValue} to the ${collectionName} collection.`
+    );
+  } catch (error) {
+    console.error("Error writing string to Firestore: ", error);
+  }
+  return {};
+};
+
+export {
+  storage,
+  fetchPageData,
+  fetchImageURL,
+  fetchCollectionData,
+  writeCollectionData,
+};
