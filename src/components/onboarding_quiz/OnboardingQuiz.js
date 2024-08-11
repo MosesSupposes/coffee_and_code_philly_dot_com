@@ -2,7 +2,10 @@ import React from "react";
 
 import QuizItem from "./QuizItem";
 import { zipObj } from "ramda";
-import { fetchCollectionData } from "../../firebase/firebase";
+import {
+  fetchCollectionData,
+  writeCollectionData,
+} from "../../firebase/firebase";
 
 /**@description This file contains a component that is responsible for the rendering of a quiz that asks the user qualifying questions about their experience with coding and willingness to join the group while complying with our code of conduct. It validates that the user is in a human that exudes excellence and shares our values before displaying our discord and meetup invite links.  */
 
@@ -33,6 +36,7 @@ const CHOICES = {
   },
   YES_OR_NO: ["Yes", "No"],
   ONE_PLUS_ONE: ["3", "2", "Other"],
+  CUSTOM_TEXT_INPUT: [""],
 };
 
 const Actions = {
@@ -59,6 +63,7 @@ function OnboardingQuiz(props) {
       question: QUESTIONS.agreesWithCodeOfConduct,
       choices: CHOICES.YES_OR_NO,
     },
+    { question: QUESTIONS.captureEmail, choices: CHOICES.CUSTOM_TEXT_INPUT },
   ]);
   const [answers, setAnswers] = React.useState([]);
   const [socialLinks, dispatch] = React.useReducer(
@@ -72,7 +77,7 @@ function OnboardingQuiz(props) {
           return state;
       }
     },
-    { meetupLink: "", discordLink: "" } // Fixed typo in 'discordLink'
+    { meetupLink: "", discordLink: "" }
   );
   const [quizCompleted, setQuizCompleted] = React.useState(false);
   const [quizFailed, setQuizFailed] = React.useState(false);
@@ -225,6 +230,7 @@ function OnboardingQuiz(props) {
               >
                 <QuizItem
                   question={question}
+                  isCustomChoice={choices === CHOICES.CUSTOM_TEXT_INPUT}
                   isFinalQuestion={
                     currentQuestion + 1 === questionsAndChoices.length
                   }

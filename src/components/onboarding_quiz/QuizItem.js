@@ -9,13 +9,31 @@ import React, { useState } from "react";
  * @param {string} props.isFinalQuestion - A flag to indicate if the question is the final question.
  * @param {function} props.onNextQuestion - The callback function to be called when the next question button is clicked.
  * @param {Array<string>} props.choices - The array of choices for the question.
+ * @param {boolean} props.isCustomChoice - A flag to indicate if the question is a custom text input instead of a discrete set of choices.
  * @returns {JSX.Element} The rendered quiz item component.
  */
-function QuizItem({ question, isFinalQuestion, onNextQuestion, choices }) {
+function QuizItem({
+  question,
+  isFinalQuestion,
+  onNextQuestion,
+  choices,
+  isCustomChoice,
+}) {
   const [selectedChoice, setSelectedChoice] = useState(null);
+  const [customChoice, setCustomChoice] = useState("");
 
-  const handleChange = (event) => {
-    setSelectedChoice(event.target.value);
+  const INPUT_TYPES = {
+    TEXT: "text",
+    RADIO: "radio",
+  };
+
+  const handleChange = (inputType) => (event) => {
+    switch (inputType) {
+      case INPUT_TYPES.TEXT:
+        return setCustomChoice(event.target.value);
+      case INPUT_TYPES.RADIO:
+        return setSelectedChoice(event.target.value);
+    }
   };
 
   // Use the question as part of the name attribute to ensure uniqueness
@@ -34,35 +52,47 @@ function QuizItem({ question, isFinalQuestion, onNextQuestion, choices }) {
         <legend>
           <i>{question}</i>
         </legend>
-        {choices.map((choice, index) => (
-          <div
-            key={index}
-            style={{
-              display: "block",
-              margin: "5px",
-            }}
-          >
+        {isCustomChoice ? (
+          <div>
             <input
-              type="radio"
-              id={`${uniqueName}_${choice}`}
+              type={"text"}
+              id={`${uniqueName}_custom`}
               name={uniqueName}
-              value={choice}
-              key={index}
-              onChange={handleChange}
-              checked={selectedChoice === choice}
+              onChange={handleChange(INPUT_TYPES.TEXT)}
+              value={customChoice}
             />
-            <label
-              key={index * 10}
-              htmlFor={`${uniqueName}_${choice}`}
+          </div>
+        ) : (
+          choices.map((choice, index) => (
+            <div
+              key={index}
               style={{
-                paddingLeft: "4px",
-                paddingRight: "8px",
+                display: "block",
+                margin: "5px",
               }}
             >
-              {choice}
-            </label>
-          </div>
-        ))}
+              <input
+                type="radio"
+                id={`${uniqueName}_${choice}`}
+                name={uniqueName}
+                value={choice}
+                key={index}
+                onChange={handleChange(INPUT_TYPES.RADIO)}
+                checked={selectedChoice === choice}
+              />
+              <label
+                key={index * 10}
+                htmlFor={`${uniqueName}_${choice}`}
+                style={{
+                  paddingLeft: "4px",
+                  paddingRight: "8px",
+                }}
+              >
+                {choice}
+              </label>
+            </div>
+          ))
+        )}
       </fieldset>
       <button
         style={{
@@ -78,13 +108,20 @@ function QuizItem({ question, isFinalQuestion, onNextQuestion, choices }) {
           justifyContent: "center",
           margin: "0 auto",
         }}
-        disabled={selectedChoice === null}
+        disabled={selectedChoice === null || customChoice === ""}
         onClick={(event) => {
-          // Prevent the form from being submitted
-          event.preventDefault();
-          if (selectedChoice !== null) {
-            onNextQuestion(selectedChoice);
-            setSelectedChoice(null);
+          event.stopPropagation();
+
+          if (isCustomChoice) {
+            if (customChoice !== "") {
+              onNextQuestion(customChoice);
+              setCustomChoice("");
+            } else {
+              if (selectedChoice !== null) {
+                onNextQuestion(selectedChoice);
+                setSelectedChoice(null);
+              }
+            }
           }
         }}
       >
